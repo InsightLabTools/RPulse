@@ -6,34 +6,56 @@
 
 #define COMMAND_START "p>start"    // команда для запуска эксперимента
 #define READINGS_RESULUTION 200000 // период снятия показаний в микросекундах (сейчас 200 мс)
+#define MAX_LIST_SIZE 10           // максимальное количество элементов в массивах
 
 // перечисление типов пина
-enum SensorType
+enum PinType
 {
     analog,
     digital
 };
 
-// информация об отслеживаемом пинет
-struct SensorData
+// перечисление типов переменных, которые можно отслеживать
+enum VarType
 {
-    int pin;         // номер пина
-    String key;      // название
-    SensorType type; // тип (аналоговый/цифровой)
+    floatVar,
+    intVar
+};
+
+// информация об отслеживаемом пине
+struct PinData
+{
+    int pin;      // номер пина
+    String key;   // название
+    PinType type; // тип (аналоговый/цифровой)
+};
+
+// информация об отслеживаемой переменной
+struct VarData
+{
+    float *floatValue; // указатель на вещественное значение
+    int *intValue;     // указатель на целое значение
+    String key;        // название
+    VarType type;      // тип (целая/вещественная)
 };
 
 class RPulse
 {
 public:
-    RPulse();                                               // конструктор
-    void init(int baudRate);                                // открываем последовательный порт
-    void wait();                                            // ждём получения сообщения P>start;
-    static void send();                                     // отправка отслеживаемых значений
-    void watchSensor(int pin, SensorType type, String key); // отслеживать значение с заданного пина
+    RPulse();                // конструктор
+    void init(int baudRate); // открываем последовательный порт
+    void wait();             // ждём получения сообщения P>start;
+    void start();
+    static void send();                               // отправка отслеживаемых значений
+    void watchPin(int pin, PinType type, String key); // отслеживать значение с заданного пина
+    void watchVar(int &var, String key);              // отслеживать переменную целого типа
+    void watchVar(float &var, String key);            // отслеживать переменную вещественного типа
 
 private:
-    static SensorData sensorsList[10];                  // массив отслеживаемых пинов
-    static int sensorsListSize;                         // количество отслеживаемых пинов
+    static PinData pinList[MAX_LIST_SIZE];              // массив отслеживаемых пинов
+    static int pinListSize;                             // количество отслеживаемых пинов
+    static VarData varList[MAX_LIST_SIZE];              // массив отслеживаемых переменных
+    static int varListSize;                             // количество переменных, за которыми нужно следить
     static String charArrayToString(char *a, int size); // преобразование массива символов в строку
 };
 

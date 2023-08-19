@@ -2,8 +2,11 @@
 #include "GyverTimers.h"
 #include "RPulse.h"
 
-int RPulse::sensorsListSize = 0;
-SensorData RPulse::sensorsList[10];
+int RPulse::pinListSize = 0;
+PinData RPulse::pinList[MAX_LIST_SIZE];
+
+int RPulse::varListSize = 0;
+VarData RPulse::varList[MAX_LIST_SIZE];
 
 /**
  * @brief Конструктор класса RPulse
@@ -48,6 +51,15 @@ void RPulse::wait()
         }
     }
 
+    // запускаем отслеживание значений после команды
+    this->start();
+}
+
+/**
+ * @brief Старт обработки прерываний и отправки отслеживаемых значений
+ */
+void RPulse::start()
+{
     // запускаем обработку прерывания по таймеру
     Timer1.setPeriod(READINGS_RESULUTION);
     Timer1.enableISR(CHANNEL_A);
@@ -59,15 +71,43 @@ void RPulse::wait()
  * @param type тип пина (цифровой/аналоговый)
  * @param key название для значения
  */
-void RPulse::watchSensor(int pin, SensorType type, String key)
+void RPulse::watchPin(int pin, PinType type, String key)
 {
-    SensorData sensor;
+    if (this->pinListSize == MAX_LIST_SIZE)
+        return;
+    PinData sensor;
     sensor.pin = pin;
     sensor.key = key;
     sensor.type = type;
 
-    this->sensorsList[this->sensorsListSize] = sensor;
-    this->sensorsListSize++;
+    this->pinList[this->pinListSize] = sensor;
+    this->pinListSize++;
+}
+
+void RPulse::watchVar(int &var, String key)
+{
+    if (this->varListSize == MAX_LIST_SIZE)
+        return;
+    VarData variable;
+    variable.intValue = &var;
+    variable.key = key;
+    variable.type = intVar;
+
+    this->varList[this->varListSize] = variable;
+    this->varListSize++;
+}
+
+void RPulse::watchVar(float &var, String key)
+{
+    if (this->varListSize == MAX_LIST_SIZE)
+        return;
+    VarData variable;
+    variable.floatValue = &var;
+    variable.key = key;
+    variable.type = floatVar;
+
+    this->varList[this->varListSize] = variable;
+    this->varListSize++;
 }
 
 /**
@@ -76,11 +116,11 @@ void RPulse::watchSensor(int pin, SensorType type, String key)
 void RPulse::send()
 {
     String readings = "p>";
-    int sensorsSize = RPulse::sensorsListSize;
+    int sensorsSize = RPulse::pinListSize;
     for (int i = 0; i < sensorsSize; i++)
     {
         int sensorValue;
-        SensorData data = RPulse::sensorsList[i];
+        PinData data = RPulse::pinList[i];
         if (data.type == analog)
         {
             sensorValue = analogRead(data.pin);
@@ -90,6 +130,20 @@ void RPulse::send()
             sensorValue = digitalRead(data.pin);
         }
         readings += data.key + ":" + String(sensorValue) + ";";
+    }
+
+    int varsSize = RPulse::varListSize;
+    for (int i = 0; i < varsSize; i++)
+    {
+        VarData data = RPulse::varList[i];
+        if (data.type == intVar)
+        {
+            readings += data.key + ":" + String(*data.intValue) + ";";
+        }
+        if (data.type == floatVar)
+        {
+            readings += data.key + ":" + String(*data.floatValue) + ";";
+        }
     }
 
     Serial.println(readings);
