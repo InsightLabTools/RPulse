@@ -2,12 +2,19 @@
 #include "GyverTimers.h"
 #include "RPulse.h"
 
+int RPulse::sensorsListSize = 0;
+SensorData RPulse::sensorsList[10];
+
+/**
+ * @brief Конструктор класса RPulse
+ */
 RPulse::RPulse()
 {
 }
 
 /**
- * Инициализация соединения
+ * @brief Инициализация последовательного подключения
+ * @param baudRate скорость подключения
  */
 void RPulse::init(int baudRate)
 {
@@ -15,7 +22,7 @@ void RPulse::init(int baudRate)
 }
 
 /**
- * Ожидание команды для запуска робота
+ * @brief Ожидаем команды для продолжения работы.
  */
 void RPulse::wait()
 {
@@ -31,18 +38,76 @@ void RPulse::wait()
         if (numBytes > 0)
         {
             // ... преобразуем их в строку
-            command = charArrayToString(message, numBytes);
+            command = this->charArrayToString(message, numBytes);
             if (command == COMMAND_START)
             {
                 // пришла подходящая команда
+                // можно продолжать
                 break;
             }
         }
     }
+
+    // запускаем обработку прерывания по таймеру
+    Timer1.setPeriod(READINGS_RESULUTION);
+    Timer1.enableISR(CHANNEL_A);
 }
 
 /**
- * Преобразование массива символов в строку
+ * @brief Отслеживать значения на указанном пине.
+ * @param pin номер пина
+ * @param type тип пина (цифровой/аналоговый)
+ * @param key название для значения
+ */
+void RPulse::watchSensor(int pin, SensorType type, String key)
+{
+    SensorData sensor;
+    sensor.pin = pin;
+    sensor.key = key;
+    sensor.type = type;
+
+    this->sensorsList[this->sensorsListSize] = sensor;
+    this->sensorsListSize++;
+}
+
+/**
+ * @brief Отправляем значения с датчиков через последовательный порт.
+ */
+void RPulse::send()
+{
+    String readings = "p>";
+    int sensorsSize = RPulse::sensorsListSize;
+    for (int i = 0; i < sensorsSize; i++)
+    {
+        int sensorValue;
+        SensorData data = RPulse::sensorsList[i];
+        if (data.type == analog)
+        {
+            sensorValue = analogRead(data.pin);
+        }
+        if (data.type == digital)
+        {
+            sensorValue = digitalRead(data.pin);
+        }
+        readings += data.key + ":" + String(sensorValue) + ";";
+    }
+
+    Serial.println(readings);
+}
+
+/**
+ * @brief Обработчик прерывания таймера
+ */
+ISR(TIMER1_A)
+{
+    RPulse::send();
+}
+
+/**
+ * @brief Преобразуем массив символов в строку
+ * @param a массив символов
+ * @param size размер массива
+ * @return String итоговая строка
  */
 String RPulse::charArrayToString(char *a, int size)
 {
