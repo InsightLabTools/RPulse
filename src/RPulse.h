@@ -4,8 +4,8 @@
 #include "Arduino.h"
 #include "GyverTimers.h"
 
-#define COMMAND_START "p>start"    // команда для запуска эксперимента
-#define READINGS_RESULUTION 100000 // период снятия показаний в микросекундах (сейчас 100 мс)
+#define COMMAND_START "p<start"    // команда для запуска эксперимента
+#define READINGS_RESOLUTION 100000 // период снятия показаний в микросекундах (сейчас 100 мс)
 #define MAX_LIST_SIZE 10           // максимальное количество элементов в массивах
 
 // перечисление типов пина
@@ -39,23 +39,35 @@ struct VarData
     VarType type;      // тип (целая/вещественная)
 };
 
+// параметры эксперимента
+struct Params
+{
+    float value;
+    String key;
+};
+
 class RPulse
 {
 public:
-    RPulse();                // конструктор
-    void init(int baudRate); // открываем последовательный порт
-    void wait();             // ждём получения сообщения P>start;
-    void start();
+    RPulse();                                         // конструктор
+    void init(int baudRate);                          // открываем последовательный порт
+    void wait();                                      // ждём получения сообщения P>start;
+    void start();                                     // запуск отслеживания значений по таймеру
     static void send();                               // отправка отслеживаемых значений
     void watchPin(int pin, PinType type, String key); // отслеживать значение с заданного пина
     void watchVar(int &var, String key);              // отслеживать переменную целого типа
     void watchVar(float &var, String key);            // отслеживать переменную вещественного типа
+    int getInt(String key, int defaultValue);
+    float getFloat(String key, float defaultValue);
 
 private:
+    void parseParams(String);                           // парсинг и сохранение полученных параметров
     static PinData pinList[MAX_LIST_SIZE];              // массив отслеживаемых пинов
     static int pinListSize;                             // количество отслеживаемых пинов
     static VarData varList[MAX_LIST_SIZE];              // массив отслеживаемых переменных
     static int varListSize;                             // количество переменных, за которыми нужно следить
+    Params paramsList[MAX_LIST_SIZE];                   // массив полученных параметров
+    int paramsListSize;                                 // количество полученных параметров
     static String charArrayToString(char *a, int size); // преобразование массива символов в строку
 };
 

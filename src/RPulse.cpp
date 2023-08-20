@@ -13,6 +13,8 @@ VarData RPulse::varList[MAX_LIST_SIZE];
  */
 RPulse::RPulse()
 {
+    int paramsListSize = 0;
+    Params paramsList[MAX_LIST_SIZE];
 }
 
 /**
@@ -29,24 +31,29 @@ void RPulse::init(int baudRate)
  */
 void RPulse::wait()
 {
-    String command;
+    String rawMessage;
 
     while (true)
     {
-        char message[10];
+        char message[128];
 
         // читаем байты до символа ;
-        int numBytes = Serial.readBytesUntil(';', message, 10);
+        int numBytes = Serial.readBytesUntil(';', message, 128);
         // если есть прочитанные байты...
         if (numBytes > 0)
         {
             // ... преобразуем их в строку
-            command = this->charArrayToString(message, numBytes);
-            if (command == COMMAND_START)
+            rawMessage = this->charArrayToString(message, numBytes);
+            if (rawMessage == COMMAND_START)
             {
                 // пришла подходящая команда
                 // можно продолжать
                 break;
+            }
+            else if (rawMessage.startsWith("p<"))
+            {
+                // парсим полученные параметры
+                this->parseParams(rawMessage);
             }
         }
     }
@@ -61,7 +68,7 @@ void RPulse::wait()
 void RPulse::start()
 {
     // запускаем обработку прерывания по таймеру
-    Timer1.setPeriod(READINGS_RESULUTION);
+    Timer1.setPeriod(READINGS_RESOLUTION);
     Timer1.enableISR(CHANNEL_A);
 }
 
@@ -143,7 +150,10 @@ void RPulse::send()
         {
             sensorValue = digitalRead(data.pin);
         }
-        readings += data.key + ":" + String(sensorValue) + ";";
+        readings += data.key;
+        readings += F(":");
+        readings += sensorValue;
+        readings += F("|");
     }
 
     // перебираем список отслеживаемых переменных
@@ -153,16 +163,40 @@ void RPulse::send()
         VarData data = RPulse::varList[i];
         if (data.type == intVar)
         {
-            readings += data.key + ":" + String(*data.intValue) + ";";
+            readings += data.key;
+            readings += F(":");
+            readings += *data.intValue;
+            readings += F("|");
         }
         if (data.type == floatVar)
         {
-            readings += data.key + ":" + String(*data.floatValue) + ";";
+            readings += data.key;
+            readings += F(":");
+            readings += *data.floatValue;
+            readings += F("|");
         }
     }
 
     // отправляем строку с значениями
     Serial.println(readings);
+}
+
+void RPulse::parseParams(String rawParams)
+{
+    // нет параметров для парсинга
+    if (rawParams.length() == 2)
+        return;
+    Serial.println(rawParams);
+}
+
+int RPulse::getInt(String key, int defaultValue = 0)
+{
+    return defaultValue;
+}
+
+float RPulse::getFloat(String key, float defaultValue = 0.0)
+{
+    return defaultValue;
 }
 
 /**
