@@ -39,8 +39,8 @@ struct VarData
     VarType type;      // тип (целая/вещественная)
 };
 
-// параметры эксперимента
-struct Params
+// параметр эксперимента, получаемый через последовательный порт
+struct Param
 {
     float value;
     String key;
@@ -57,8 +57,7 @@ public:
     void watchPin(int pin, PinType type, String key); // отслеживать значение с заданного пина
     void watchVar(int &var, String key);              // отслеживать переменную целого типа
     void watchVar(float &var, String key);            // отслеживать переменную вещественного типа
-    int getInt(String key, int defaultValue);
-    float getFloat(String key, float defaultValue);
+    float get(String key, float defaultValue = 0.0);  // возвращает параметр, полученный через последовательйны порт
 
 private:
     void parseParams(String);                           // парсинг и сохранение полученных параметров
@@ -66,7 +65,7 @@ private:
     static int pinListSize;                             // количество отслеживаемых пинов
     static VarData varList[MAX_LIST_SIZE];              // массив отслеживаемых переменных
     static int varListSize;                             // количество переменных, за которыми нужно следить
-    Params paramsList[MAX_LIST_SIZE];                   // массив полученных параметров
+    Param paramsList[MAX_LIST_SIZE];                    // массив полученных параметров
     int paramsListSize;                                 // количество полученных параметров
     static String charArrayToString(char *a, int size); // преобразование массива символов в строку
 };

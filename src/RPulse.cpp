@@ -14,7 +14,7 @@ VarData RPulse::varList[MAX_LIST_SIZE];
 RPulse::RPulse()
 {
     int paramsListSize = 0;
-    Params paramsList[MAX_LIST_SIZE];
+    Param paramsList[MAX_LIST_SIZE];
 }
 
 /**
@@ -33,7 +33,7 @@ void RPulse::wait()
 {
     String rawMessage;
 
-    while (true)
+    for (;;)
     {
         char message[128];
 
@@ -181,22 +181,62 @@ void RPulse::send()
     Serial.println(readings);
 }
 
+/**
+ * @brief Парсинг входных параметров эксперимента
+ * Параметры приходят в формате p<ключ1:значени1|ключ2:значение2|
+ * @param rawParams строка с параметрами
+ */
 void RPulse::parseParams(String rawParams)
 {
     // нет параметров для парсинга
     if (rawParams.length() == 2)
         return;
-    Serial.println(rawParams);
+
+    int start = 2;                                      // пропускаем строку "p<"
+    int paramSeparator = rawParams.indexOf('|', start); // ищем первый разделитель |
+    // повторяем, пока есть сепаратор |
+    while (paramSeparator != -1)
+    {
+        String param = rawParams.substring(start, paramSeparator);                       // подстрока ключ:значение
+        int valueSeparator = rawParams.indexOf(':', start);                              // позиция разделителя в паре ключ:значение
+        String key = rawParams.substring(start, valueSeparator);                         // получаем ключ
+        float value = rawParams.substring(valueSeparator + 1, paramSeparator).toFloat(); // получаем значение
+
+        // если в массиве параметров ещё есть место...
+        if (this->paramsListSize != MAX_LIST_SIZE)
+        {
+            Param p;
+            p.key = key;
+            p.value = value;
+
+            // ... сохраняем параметр в массив
+            this->paramsList[this->paramsListSize] = p;
+            this->paramsListSize++;
+        }
+
+        // на следующей итерации начинаем поиск после полученных значений
+        start = paramSeparator + 1;
+        // ищем индекс следующего сепаратора |
+        paramSeparator = rawParams.indexOf('|', start);
+    }
 }
 
-int RPulse::getInt(String key, int defaultValue = 0)
+float RPulse::get(String key, float defaultValue = 0.0)
 {
-    return defaultValue;
-}
+    float value = defaultValue; // будет возвращать дефолтное значение, если не найдём указанный ключ
 
-float RPulse::getFloat(String key, float defaultValue = 0.0)
-{
-    return defaultValue;
+    // перебираем массив параметров, чтобы найти ключ key
+    for (int i = 0; i < this->paramsListSize; i++)
+    {
+        Param p = this->paramsList[i];
+        if (key == p.key)
+        {
+            value = p.value;
+            break;
+        }
+    }
+
+    return value;
 }
 
 /**
