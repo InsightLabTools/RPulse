@@ -84,6 +84,11 @@ void RPulse::watchPin(int pin, PinType type, String key)
     this->pinListSize++;
 }
 
+/**
+ * @brief Отслеживать значение целочисленной переменной
+ * @param var переменная
+ * @param key название для значения
+ */
 void RPulse::watchVar(int &var, String key)
 {
     if (this->varListSize == MAX_LIST_SIZE)
@@ -97,6 +102,11 @@ void RPulse::watchVar(int &var, String key)
     this->varListSize++;
 }
 
+/**
+ * @brief Отслеживать значение вещественной переменной
+ * @param var переменная
+ * @param key название для значения
+ */
 void RPulse::watchVar(float &var, String key)
 {
     if (this->varListSize == MAX_LIST_SIZE)
@@ -116,11 +126,15 @@ void RPulse::watchVar(float &var, String key)
 void RPulse::send()
 {
     String readings = "p>";
+
+    // перебираем список пинов и считываем значения
     int sensorsSize = RPulse::pinListSize;
     for (int i = 0; i < sensorsSize; i++)
     {
         int sensorValue;
         PinData data = RPulse::pinList[i];
+
+        // используем подходяющую функцию исходя из типа сигнала
         if (data.type == analog)
         {
             sensorValue = analogRead(data.pin);
@@ -132,6 +146,7 @@ void RPulse::send()
         readings += data.key + ":" + String(sensorValue) + ";";
     }
 
+    // перебираем список отслеживаемых переменных
     int varsSize = RPulse::varListSize;
     for (int i = 0; i < varsSize; i++)
     {
@@ -146,6 +161,7 @@ void RPulse::send()
         }
     }
 
+    // отправляем строку с значениями
     Serial.println(readings);
 }
 
