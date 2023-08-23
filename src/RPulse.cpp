@@ -150,6 +150,7 @@ void RPulse::send()
         {
             sensorValue = digitalRead(data.pin);
         }
+        readings += F("pin:");
         readings += data.key;
         readings += F(":");
         readings += sensorValue;
@@ -163,6 +164,7 @@ void RPulse::send()
         VarData data = RPulse::varList[i];
         if (data.type == intVar)
         {
+            readings += F("var:");
             readings += data.key;
             readings += F(":");
             readings += *data.intValue;
@@ -170,6 +172,7 @@ void RPulse::send()
         }
         if (data.type == floatVar)
         {
+            readings += F("var:");
             readings += data.key;
             readings += F(":");
             readings += *data.floatValue;
