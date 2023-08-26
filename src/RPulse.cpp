@@ -24,6 +24,7 @@ RPulse::RPulse()
 void RPulse::init(int baudRate)
 {
     Serial.begin(baudRate);
+    Serial.setTimeout(100);
 }
 
 /**
@@ -44,16 +45,11 @@ void RPulse::wait()
         {
             // ... преобразуем их в строку
             rawMessage = this->charArrayToString(message, numBytes);
-            if (rawMessage == COMMAND_START)
-            {
-                // пришла подходящая команда
-                // можно продолжать
-                break;
-            }
-            else if (rawMessage.startsWith("p<"))
+            if (rawMessage.startsWith("p<"))
             {
                 // парсим полученные параметры
                 this->parseParams(rawMessage);
+                break;
             }
         }
     }

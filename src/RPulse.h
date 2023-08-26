@@ -4,7 +4,6 @@
 #include "Arduino.h"
 #include "GyverTimers.h"
 
-#define COMMAND_START "p<start"    // команда для запуска эксперимента
 #define READINGS_RESOLUTION 100000 // период снятия показаний в микросекундах (сейчас 100 мс)
 #define MAX_LIST_SIZE 10           // максимальное количество элементов в массивах
 
