@@ -12,9 +12,17 @@ RPulse	KEYWORD1	RPulse
 # Methods and Functions (KEYWORD2)
 #######################################
 
-
+init	KEYWORD2
+wait	KEYWORD2
+start	KEYWORD2
+send	KEYWORD2
+watchPin KEYWORD2
+watchVar KEYWORD2
+get	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
 
+analog	LITERAL1
+digital	LITERAL1
