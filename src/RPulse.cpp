@@ -8,6 +8,8 @@ PinData RPulse::pinList[MAX_LIST_SIZE];
 int RPulse::varListSize = 0;
 VarData RPulse::varList[MAX_LIST_SIZE];
 
+Timer RPulse::currentTimer;
+
 /**
  * @brief Конструктор класса RPulse
  */
@@ -20,11 +22,13 @@ RPulse::RPulse()
 /**
  * @brief Инициализация последовательного подключения
  * @param baudRate скорость подключения
+ * @param timer используемый таймер
  */
-void RPulse::init(int baudRate = 9600)
+void RPulse::init(int baudRate = 9600, Timer timer = T1)
 {
     Serial.begin(baudRate);
     Serial.setTimeout(100);
+    RPulse::currentTimer = timer;
 }
 
 /**
@@ -64,8 +68,29 @@ void RPulse::wait()
 void RPulse::start()
 {
     // запускаем обработку прерывания по таймеру
-    Timer1.setPeriod(READINGS_RESOLUTION);
-    Timer1.enableISR(CHANNEL_A);
+    switch (RPulse::currentTimer)
+    {
+    case T0:
+        Timer0.setPeriod(READINGS_RESOLUTION);
+        Timer0.outputDisable(CHANNEL_A);
+        Timer0.enableISR(CHANNEL_A);
+        break;
+
+    case T1:
+        Timer1.setPeriod(READINGS_RESOLUTION);
+        Timer1.outputDisable(CHANNEL_A);
+        Timer1.enableISR(CHANNEL_A);
+        break;
+
+    case T2:
+        Timer2.setPeriod(READINGS_RESOLUTION);
+        Timer2.outputDisable(CHANNEL_A);
+        Timer2.enableISR(CHANNEL_A);
+        break;
+
+    default:
+        break;
+    }
 }
 
 /**
@@ -225,6 +250,13 @@ void RPulse::parseParams(String rawParams)
     }
 }
 
+/**
+ * @brief Получение параметра по его имени
+ *
+ * @param key название параметра
+ * @param defaultValue значение по умолчанию
+ * @return float значение параметра
+ */
 float RPulse::get(String key, float defaultValue = 0.0)
 {
     float value = defaultValue; // будет возвращать дефолтное значение, если не найдём указанный ключ
@@ -244,11 +276,30 @@ float RPulse::get(String key, float defaultValue = 0.0)
 }
 
 /**
- * @brief Обработчик прерывания таймера
+ * @brief Обработчик прерывания таймера 0
+ */
+ISR(TIMER0_A)
+{
+    if (RPulse::currentTimer == T0)
+        RPulse::send();
+}
+
+/**
+ * @brief Обработчик прерывания таймера 1
  */
 ISR(TIMER1_A)
 {
-    RPulse::send();
+    if (RPulse::currentTimer == T1)
+        RPulse::send();
+}
+
+/**
+ * @brief Обработчик прерывания таймера 2
+ */
+ISR(TIMER2_A)
+{
+    if (RPulse::currentTimer == T2)
+        RPulse::send();
 }
 
 /**

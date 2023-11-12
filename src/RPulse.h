@@ -21,6 +21,14 @@ enum VarType
     intVar
 };
 
+// перечисление таймеров
+enum Timer
+{
+    T0,
+    T1,
+    T2
+};
+
 // информация об отслеживаемом пине
 struct PinData
 {
@@ -49,7 +57,7 @@ class RPulse
 {
 public:
     RPulse();                                         // конструктор
-    void init(int baudRate = 9600);                   // открываем последовательный порт
+    void init(int baudRate = 9600, Timer timer = T1); // открываем последовательный порт
     void wait();                                      // ждём получения сообщения P>start;
     void start();                                     // запуск отслеживания значений по таймеру
     static void send();                               // отправка отслеживаемых значений
@@ -57,6 +65,7 @@ public:
     void watchVar(int &var, String key);              // отслеживать переменную целого типа
     void watchVar(float &var, String key);            // отслеживать переменную вещественного типа
     float get(String key, float defaultValue = 0.0);  // возвращает параметр, полученный через последовательйны порт
+    static Timer currentTimer;                        // используемый таймер
 
 private:
     void parseParams(String);                           // парсинг и сохранение полученных параметров
