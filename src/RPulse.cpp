@@ -21,7 +21,7 @@ RPulse::RPulse()
  * @brief Инициализация последовательного подключения
  * @param baudRate скорость подключения
  */
-void RPulse::init(int baudRate)
+void RPulse::init(int baudRate = 9600)
 {
     Serial.begin(baudRate);
     Serial.setTimeout(100);

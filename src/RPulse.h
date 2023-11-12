@@ -49,7 +49,7 @@ class RPulse
 {
 public:
     RPulse();                                         // конструктор
-    void init(int baudRate);                          // открываем последовательный порт
+    void init(int baudRate = 9600);                   // открываем последовательный порт
     void wait();                                      // ждём получения сообщения P>start;
     void start();                                     // запуск отслеживания значений по таймеру
     static void send();                               // отправка отслеживаемых значений
